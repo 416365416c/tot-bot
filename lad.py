@@ -67,7 +67,6 @@ class Lad:
         ret = []
         if member:
             for r in member.roles:
-                print(r.id)
                 ret.append(r.id)
         return ret
 

@@ -10,15 +10,16 @@ import logic
 import lad
 
 logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
+#TODO: Use logging for app logs as well, and redirect to a file
 sldb = sl.connect('tot.db')
 datastore.init_db(sldb)
+# Reset OTT every restart and use, maybe add periodically just for lolz?
 new_pass = datastore.reset_master_password(sldb)
-print(f"First OTP: {new_pass}")
+print(f"First OTT: {new_pass}")
 intents = discord.Intents.default()
 intents.members = True # Non-standard but necessary for the server bind approach
 client = discord.Client(intents=intents)
@@ -48,7 +49,7 @@ async def on_message(message):
         for word in message_words:
             if len(word) >= 1 and word[0] not in "!@#$":
                 if first_word:
-                    message_content += f"{word.lower()} " # Lower-case command
+                    message_content += f"{word.lower()} " # Lower-case command only for easy parsing
                     first_word = False
                 else:
                     message_content += f"{word} " # Trailing space is okay as we'll rstrip

@@ -22,7 +22,7 @@ help admin - this message
 list <role name> - list members with role R who are away and when they'll be back.
 empower <role name> - toggles admin powers for role R
 bind <server id> - binds this bot instance to a server by id; resets admin roles.
-super OTP - Enter superadmin mode; requires OTP from server logs.
+super OTT - Enter superadmin mode; requires OTT from server logs.
 Usually you'll use superadmin mode once to call bind and then empower with an initial admin role.
 """
 # clear <user name> - clear the record for named user
@@ -78,13 +78,13 @@ def respond_to(ds_con, lad, user_id, user_name, message):
             if l[0] == user_id and l[1] + timedelta(minutes=SUPER_MINUTES) > datetime.utcnow():
                 return f"You must wait {SUPER_MINUTES} before attempting to enter super admin mode again"
 
-        # Requires an OTP from the server logs.
+        # Requires an OTT from the server logs.
         password = message[6:] # Drop 'super ', rest is password
         if password and datastore.check_master_password(ds_con, password):
             print(f"super attempt succeeded: {user_name} {user_id}")
             datastore.push_super_login(ds_con, user_id)
             new_pass = datastore.reset_master_password(ds_con)
-            print(f"New OTP: {new_pass}")
+            print(f"New OTT: {new_pass}")
             return f"Welcome administrator. Your session will expire in {SUPER_MINUTES} minutes."
         else:
             print(f"super attempt failed: {password}")
