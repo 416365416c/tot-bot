@@ -24,15 +24,15 @@ class TestDataStore(unittest.TestCase):
 
     def testPopulate(self):
         with self.con as con:
-            datastore.upsert_user(con, "Test A", "1", datetime(2021, 2, 21, 18))
+            datastore.upsert_user(con, "Test A", 1, datetime(2021, 2, 21, 18))
             datastore.upsert_user(con, "Test B", 2, datetime(2021, 2, 21, 19))
             datastore.upsert_user(con, "Test C", 3, datetime(2021, 2, 21, 20))
-            datastore.upsert_user(con, "Test A", "1", datetime(2021, 2, 21, 21))
+            datastore.upsert_user(con, "Test A", 1, datetime(2021, 2, 21, 21))
 
         expected = [
-                ('Test A', '1', '2021-02-21 21:00:00', 0),
-                ('Test B', '2', '2021-02-21 19:00:00', 0),
-                ('Test C', '3', '2021-02-21 20:00:00', 0)
+                ('Test A', 1, '2021-02-21 21:00:00', 0),
+                ('Test B', 2, '2021-02-21 19:00:00', 0),
+                ('Test C', 3, '2021-02-21 20:00:00', 0)
         ]
 
         with self.con as con:
@@ -45,8 +45,8 @@ class TestDataStore(unittest.TestCase):
 
     def testAcks(self):
         expected = [
-                ('Test B', '2', '2121-02-21 18:00:00', 0),
-                ('Test A', '1', '2121-02-21 19:00:00', 0),
+                ('Test B', 2, '2121-02-21 18:00:00', 0),
+                ('Test A', 1, '2121-02-21 19:00:00', 0),
         ]
         with self.con as con:
             datastore.upsert_user(con, "Test A", 1, datetime(2121, 2, 21, 19))
@@ -56,7 +56,7 @@ class TestDataStore(unittest.TestCase):
 
         with self.con as con:
             datastore.ack_event(con, 1)
-            expected[1] = ('Test A', '1', '2121-02-21 19:00:00', 1)
+            expected[1] = ('Test A', 1, '2121-02-21 19:00:00', 1)
             results = datastore.get_backs(con)
             i = 0
             for r in results:
@@ -71,18 +71,18 @@ class TestDataStore(unittest.TestCase):
 
         with self.con as con:
             results = datastore.query_by_name(con, "Test B")
-            self.assertEqual(results, [('Test B', '2', '2121-02-21 19:00:00', 0)])
+            self.assertEqual(results, [('Test B', 2, '2121-02-21 19:00:00', 0)])
 
         with self.con as con:
             datastore.upsert_user(con, "Test B", 2, datetime(2121, 2, 21, 21))
             results = datastore.query_by_name(con, "Test B")
-            self.assertEqual(results, [('Test B', '2', '2121-02-21 21:00:00', 0)])
+            self.assertEqual(results, [('Test B', 2, '2121-02-21 21:00:00', 0)])
 
         with self.con as con:
             datastore.upsert_user(con, "Test B", 2)
             datastore.upsert_user(con, "Test C", 2, datetime(2021, 2, 21, 21))
             results = datastore.get_backs(con)
-            self.assertEqual(results, [('Test A', '1', '2121-02-21 18:00:00', 0)]) # Only future back times in backs
+            self.assertEqual(results, [('Test A', 1, '2121-02-21 18:00:00', 0)]) # Only future back times in backs
 
 
     def testMasterPassword(self):
@@ -112,31 +112,31 @@ class TestDataStore(unittest.TestCase):
             self.assertEqual(roles, [])
 
         with self.con as con:
-            datastore.toggle_role(con, "Role1", "Admin1")
-            datastore.toggle_role(con, "Role2", "Admin1")
-            datastore.toggle_role(con, "Role3", "Admin1")
+            datastore.toggle_role(con, 1, 1)
+            datastore.toggle_role(con, 2, 1)
+            datastore.toggle_role(con, 3, 1)
 
             roles = datastore.get_roles(con)
-            self.assertEqual(roles, ['Role1', 'Role2', 'Role3'])
+            self.assertEqual(roles, [1, 2, 3])
 
         with self.con as con:
-            datastore.toggle_role(con, "Role2", "Admin1")
+            datastore.toggle_role(con, 2, 1)
 
             roles = datastore.get_roles(con)
-            self.assertEqual(roles, ['Role1', 'Role3'])
+            self.assertEqual(roles, [1, 3])
 
         with self.con as con:
             # Since we're logging these changes, may as well ensure that is in the db
-            role_data = con.execute("SELECT set_by, set_at FROM admin_roles WHERE role_id = \"Role1\";").fetchone()
+            role_data = con.execute("SELECT set_by, set_at FROM admin_roles WHERE role_id = 1;").fetchone()
             self.assertNotEqual(role_data, None)
-            self.assertEqual(role_data[0], "Admin1")
+            self.assertEqual(role_data[0], 1)
             #Somehow datetimes with microsecond precision count as earlier than the same datetime without...
             #self.assertTrue(datetime.fromisoformat(role_data[1]). >= around_now)
 
         with self.con as con:
-            datastore.set_guild(con, "Guild1")
+            datastore.set_guild(con, 1)
             guild = datastore.get_guild(con)
-            self.assertEqual(guild, "Guild1")
+            self.assertEqual(guild, 1)
 
             roles = datastore.get_roles(con)
             self.assertEqual(roles, [])

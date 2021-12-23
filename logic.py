@@ -23,13 +23,14 @@ list <role name> - list members with role R who are away and when they'll be bac
 empower <role name> - toggles admin powers for role R
 bind <server id> - binds this bot instance to a server by id; resets admin roles.
 super OTP - Enter superadmin mode; requires OTP from server logs.
-    Usually you'll use superadmin mode once to call bind and then empower with an initial admin role.
+Usually you'll use superadmin mode once to call bind and then empower with an initial admin role.
 """
 # clear <user name> - clear the record for named user
 # refresh - Updates user/server/role names in the database using the discord ids saved alongside.
 unknownTxt = "Sorry, I don't understand. Try 'help' for more details."
 unimplementedTxt = unknownTxt
 permissionTxt = "Sorry, this command is only available to admins."
+unconfiguredTxt = "Please contact my administrator, for I am not yet configured for use."
 backTxt = "Welcome back!"
 
 def xy_str(dt):
@@ -62,12 +63,35 @@ def check_for_admin(ds_con, lad, user_id, user_roles):
 
 def respond_to(ds_con, lad, user_id, user_name, message):
     admin_mode = check_for_admin(ds_con, lad, user_id, lad.get_user_roles(user_id))
-    # Returns string response. Message should be all lowercase and a sequence of space separated words
+    # Returns string response. Message should be a sequence of space separated words, with the first one lower cased already
     if message.startswith("help"):
         # help - prints help text
         if message == "help admin":
-            return helpAdminTxt
+            return f"Current Guild: {lad.guild_name()}\n" + helpAdminTxt
         return helpTxt
+    elif message.startswith("super"):
+        # ex. super RandomPassword - Enter superadmin mode for ten minutes, wherein the current user can call admin/superadmin commands.
+        if admin_mode == "super":
+            return "You already have a super admin session"
+        lockouts = datastore.get_super_lockouts(ds_con)
+        for l in lockouts:
+            if l[0] == user_id and l[1] + timedelta(minutes=SUPER_MINUTES) > datetime.utcnow():
+                return f"You must wait {SUPER_MINUTES} before attempting to enter super admin mode again"
+
+        # Requires an OTP from the server logs.
+        password = message[6:] # Drop 'super ', rest is password
+        if password and datastore.check_master_password(ds_con, password):
+            print(f"super attempt succeeded: {user_name} {user_id}")
+            datastore.push_super_login(ds_con, user_id)
+            new_pass = datastore.reset_master_password(ds_con)
+            print(f"New OTP: {new_pass}")
+            return f"Welcome administrator. Your session will expire in {SUPER_MINUTES} minutes."
+        else:
+            print(f"super attempt failed: {password}")
+            datastore.push_super_lockout(ds_con, user_id)
+            return f"Incorrect password. Please try again in {SUPER_MINUTES} minutes."
+    elif lad.guild_name() == None and admin_mode == None: # commands above skip config check, so that you can enter admin mode
+        return unconfiguredTxt
     elif message.startswith("timeoff"):
         # ex. timeoff 7 - sets user to be back after a period of time specified (back time = now + period)
         #     Supported times are: X U, where U is days/hours/minutes/months/years. Default days.
@@ -100,7 +124,7 @@ def respond_to(ds_con, lad, user_id, user_name, message):
 
         unit = "day(s)"
         if len(message_split) > 2: 
-            unit = message_split[2]
+            unit = message_split[2].lower()
         
         if unit == "day" or unit == "days" or unit == "day(s)": # (s) only in our default case
             time_delta = timedelta(days=time)
@@ -215,35 +239,20 @@ def respond_to(ds_con, lad, user_id, user_name, message):
         else:
             return f"I cannot bind to {guild_id} as I cannot access it."
         return f"tot-bot instance now bound to {guild_name}."
-    elif message.startswith("super"):
-        # ex. super RandomPassword - Enter superadmin mode for ten minutes, wherein the current user can call admin/superadmin commands.
-        if admin_mode == "super":
-            return "You already have a super admin session"
-        lockouts = datastore.get_super_lockouts(ds_con)
-        for l in lockouts:
-            if l[0] == user_id and l[1] + timedelta(minutes=SUPER_MINUTES) > datetime.utcnow():
-                return f"You must wait {SUPER_MINUTES} before attempting to enter super admin mode again"
-
-        # Requires an OTP from the server logs.
-        password = message[6:] # Drop 'super ', rest is password
-        if password and datastore.check_master_password(ds_con, password):
-            print(f"super attempt succeeded: {user_name} {user_id}")
-            datastore.push_super_login(ds_con, user_id)
-            new_pass = datastore.reset_master_password(ds_con)
-            print(f"New OTP: {new_pass}")
-            return f"Welcome administrator. Your session will expire in {SUPER_MINUTES} minutes."
-        else:
-            print(f"super attempt failed: {password}")
-            datastore.push_super_lockout(ds_con, user_id)
-            return f"Incorrect password. Please try again in {SUPER_MINUTES} minutes."
     else:
         return unknownTxt
 
 def check_backs(ds_con, lad):
     """ Send DM reminders to those back within the next day """
+    if lad.guild_name() == None:
+        return
     backs = datastore.get_backs(ds_con)
     for b in backs:
         if b[3]: #Already ack'd
+            continue
+        if len(lad.get_user_roles(b[1])) == 0:
+            # No roles, must have left the guild. Ignore them
+            datastore.ack_event(ds_con, b[1])
             continue
         t_back = datetime.fromisoformat(b[2])
         t_now = datetime.utcnow()

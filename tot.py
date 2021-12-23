@@ -18,18 +18,20 @@ logger.addHandler(handler)
 sldb = sl.connect('tot.db')
 datastore.init_db(sldb)
 new_pass = datastore.reset_master_password(sldb)
-print(f"First OTP: ${new_pass}")
-client = discord.Client()
-lad = Lad(client)
-guild_id = datastore.get_guild(sldb)
-if guild_id:
-    lad.set_guild(guild_id)
+print(f"First OTP: {new_pass}")
+intents = discord.Intents.default()
+intents.members = True # Non-standard but necessary for the server bind approach
+client = discord.Client(intents=intents)
+lad = lad.Lad(client)
 
 @client.event
 async def on_ready():
     global myId
     print(f"Started {client.user} - {client.user.id}")
     asyncio.get_event_loop().call_later(logic.POLL_INTERVAL, logic.poll, sldb, lad)
+    guild_id = datastore.get_guild(sldb)
+    if guild_id:
+        lad.set_guild(guild_id)
 
 
 @client.event
@@ -42,10 +44,15 @@ async def on_message(message):
         # For crude parsing, strip a bunch of formatting and then only take words which aren't "special"
         message_words = discord.utils.remove_markdown(message.clean_content).split(' ')
         message_content = ""
+        first_word = True
         for word in message_words:
             if len(word) >= 1 and word[0] not in "!@#$":
-                message_content += f"{word} " # Trailing space is okay
-        message_content = message_content.rstrip().lower()
+                if first_word:
+                    message_content += f"{word.lower()} " # Lower-case command
+                    first_word = False
+                else:
+                    message_content += f"{word} " # Trailing space is okay as we'll rstrip
+        message_content = message_content.rstrip()
         user_name = message.author.nick
         if user_name == None:
             user_name= message.author.name

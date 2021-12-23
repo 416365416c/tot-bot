@@ -31,118 +31,118 @@ class TestLogic(unittest.TestCase):
 
     def testMisc(self):
         # These don't do anything but should respond fixed strings and not crash
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "help")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "help")
         self.assertTrue(len(ret) > 5)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "help admin")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "help admin")
         self.assertTrue(len(ret) > 5)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "unknown")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "unknown")
         self.assertTrue(len(ret) > 5)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "supercalifragilisticexpialidocious")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "supercalifragilisticexpialidocious")
         self.assertTrue(len(ret) > 5)
 
     def testTimeOff(self):
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff")
         self.assertTrue(ret.startswith("Usage:"))
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 0") # Valid, mostly used for testing
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 0") # Valid, mostly used for testing
         self.assertEqual(ret, "See you in 0 day(s).")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 1")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 1")
         self.assertEqual(ret, "See you in 1 day(s).")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 1 day")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 1 day")
         self.assertEqual(ret, "See you in 1 day.")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 2 days")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 2 days")
         self.assertEqual(ret, "See you in 2 days.")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 1 week")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 1 week")
         self.assertEqual(ret, "See you in 1 week.")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 1 month")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 1 month")
         self.assertEqual(ret, "See you in 1 month.")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 1 year")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 1 year")
         self.assertEqual(ret, "See you in 1 year.")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 1 second")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 1 second")
         self.assertTrue(ret.startswith("Sorry"))
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 1 lightyear") # Prints to console
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 1 parsec") # Prints to console
         self.assertTrue(ret.startswith("Sorry"))
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 0.2 days")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 0.2 days")
         self.assertTrue(ret.startswith("Sorry"))
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff until the cows come home")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff until the cows come home")
         self.assertTrue(ret.startswith("See you in")) # Number is random
 
     def testWhen(self):
-        logic.respond_to(self.con, self.lad, "test1", "Mr Test", "timeoff 1")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "when mr test")
+        logic.respond_to(self.con, self.lad, 9, "Mr Test", "timeoff 1")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "when mr test")
         # Response depends on current date
         self.assertTrue("Mr Test" in ret) # Positive case finds proper name
         # Negative case
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "when mr pest")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "when mr pest")
         self.assertTrue("mr pest" in ret) # Negatie case spits out input (lower cased)
 
-        logic.respond_to(self.con, self.lad, "test2", "Mr Long", "timeoff 1000")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "soon")
+        logic.respond_to(self.con, self.lad, 10, "Mr Long", "timeoff 1000")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "soon")
         self.assertTrue("Mr Test" in ret)
         self.assertFalse("Mr Long" in ret)
 
         # These require admin, available though super admin in tests
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "list")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "list")
         self.assertTrue(ret.startswith("Sorry"))
 
         otp = datastore.reset_master_password(self.con)
-        logic.respond_to(self.con, self.lad, "1", "Ace", "super " + otp)
+        logic.respond_to(self.con, self.lad, 1, "Ace", "super " + otp)
 
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "list")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "list")
         self.assertTrue("Mr Test" in ret)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "list Fake Role")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "list Fake Role")
         self.assertTrue("Mr Test" in ret)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "list Role that doesn't exist")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "list Role that doesn't exist")
         self.assertFalse("Mr Test" in ret)
 
 
     def testReturn(self):
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 1")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 1")
         back_time = logic.xy_str(datetime.utcnow() + timedelta(days=1))
         self.assertTrue(len(ret) > 5)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "when ace")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "when ace")
         self.assertTrue(back_time in ret)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "return")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "return")
         self.assertTrue(len(ret) > 5)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "when ace")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "when ace")
         self.assertFalse(back_time in ret)
 
     def testPermissions(self):
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "empower Testers")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "empower Testers")
         self.assertTrue(ret.startswith("Sorry"))
 
         # These require admin, available though super admin in tests
         otp = datastore.reset_master_password(self.con)
-        logic.respond_to(self.con, self.lad, "1", "Ace", "super " + otp)
+        logic.respond_to(self.con, self.lad, 1, "Ace", "super " + otp)
 
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "empower")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "empower")
         self.assertFalse("Fake Role" in ret)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "empower Fake Role") #Note name -> id -> name happens in FakeLad
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "empower Fake Role") #Note name -> id -> name happens in FakeLad
         self.assertTrue("Fake Role" in ret)
         self.assertFalse("Role1" in ret)
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "empower")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "empower")
         self.assertTrue("Fake Role" in ret)
 
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "empower the nonexistent")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "empower the nonexistent")
         self.assertTrue("Cannot find role" in ret)
 
         # bind should reset roles, but not super
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "bind 0")
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "empower")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "bind 0")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "empower")
         self.assertFalse("Sorry" in ret)
         self.assertFalse("Fake Role" in ret)
 
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "super already")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "super already")
         self.assertTrue(ret.startswith("You already"))
 
     def testLockout(self):
         # Separate test because needs a clean state
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "super wrong")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "super wrong")
         self.assertTrue(ret.startswith("Incorrect"))
-        ret = logic.respond_to(self.con, self.lad, "1", "Ace", "super wrong")
+        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "super wrong")
         self.assertTrue(ret.startswith("You must wait"))
 
     def testMessages(self):
-        logic.respond_to(self.con, self.lad, "1", "Ace", "timeoff 4 hours")
+        logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 4 hours")
         back_time = logic.xy_str(datetime.utcnow() + timedelta(hours=4))
         logic.check_backs(self.con, self.lad)
         ret = self.lad.pop_last_dm()

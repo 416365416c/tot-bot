@@ -38,14 +38,14 @@ def init_db(con):
         con.execute(""" CREATE TABLE IF NOT EXISTS users
         (
             discord_name VARCHAR(255),
-            discord_id VARCHAR(255) UNIQUE,
+            discord_id BIGINT UNIQUE,
             last_back DATETIME,
             ack_flag BOOLEAN DEFAULT FALSE
         );
         """);
         con.execute(""" CREATE TABLE IF NOT EXISTS config
         (
-            bound_guild_id VARCHAR(255),
+            bound_guild_id BIGINT,
             master_password VARCHAR(255)
         );
         """);
@@ -60,8 +60,8 @@ def init_db(con):
 
         con.execute(""" CREATE TABLE IF NOT EXISTS admin_roles
         (
-            role_id VARCHAR(255) UNIQUE,
-            set_by VARCHAR(255),
+            role_id BIGINT UNIQUE,
+            set_by BIGINT,
             set_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         """);
@@ -116,7 +116,7 @@ def upsert_user(con, user_name, user_id, date=None):
 
 def reset_master_password(con):
     """Sets the one time master password to something new and returns it"""
-    new_password = secrets.token_urlsafe(16)
+    new_password = secrets.token_hex(16)
     new_hash = argon2.hash(new_password)
     with con:
         con.execute("UPDATE config SET master_password = ? WHERE oid = ?", (new_hash, config_oid))
@@ -151,6 +151,7 @@ def get_guild(con):
 def toggle_role(con, role_id, user_id):
     """Toggles the existence of a role in admin_roles"""
     global roles_cache
+
     with con:
         roles = con.execute("SELECT oid FROM admin_roles WHERE role_id = ?;", (role_id,))
         db_id = None
@@ -173,7 +174,7 @@ def get_roles(con):
         ret = []
         roles = con.execute("SELECT role_id FROM admin_roles;");
         for r in roles:
-            ret.append(r[0])
+            ret.append(int(r[0]))
         roles_cache = ret
         return roles_cache
     return []

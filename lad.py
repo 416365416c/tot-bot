@@ -8,8 +8,20 @@ class Lad:
         self.guild = None
 
     def set_guild(self, guild_id):
-        self.guild_id = guild_id
-        self.guild = self.discord_client.get_guild(self.guild_id)
+        # Must be a guild that it has been added to!
+        self.guild_id = None
+        self.guild = None
+        if type(guild_id) == str:
+            try:
+                guild_id = int(guild_id)
+            except:
+                return
+            
+        for guild in self.discord_client.guilds:
+            if guild.id == guild_id:
+                self.guild_id = guild.id
+                self.guild = guild
+                return
 
     def guild_name(self):
         if self.guild_id == None or self.guild == None:
@@ -21,6 +33,10 @@ class Lad:
             return None
         roles = self.guild.roles
         if role_id:
+            try:
+                role_id = int(role_id)
+            except:
+                return None
             for r in roles:
                 if r.id == role_id:
                     return r.name
@@ -47,20 +63,21 @@ class Lad:
     def get_user_roles(self, user_id):
         if self.guild == None:
             return []
-        member = self.guild.get_member(user_id)
+        member = self.guild.get_member(int(user_id))
         ret = []
         if member:
             for r in member.roles:
+                print(r.id)
                 ret.append(r.id)
         return ret
 
     def dm(self, user_id, message):
         member = self.guild.get_member(user_id)
-        await member.send(message)
+        member.send(message) # No waiting, just let it run in the background
 
 class FakeLad:
     def __init__(self):
-        self.guild_id = "Guild1"
+        self.guild_id = 11
 
     def set_guild(self, guild_id):
         self.guild_id = guild_id
@@ -70,24 +87,24 @@ class FakeLad:
 
     def get_role_name_or_id(self, role_id=None, role_name=None):
         if role_name == "Fake Role":
-            return "Role1"
-        elif role_id == "Role1":
+            return 2
+        elif role_id == 2:
             return "Fake Role"
         return None
 
     def get_user_name_or_id(self, user_id=None, user_name=None):
         if user_name == "Fake User":
-            return "User1"
-        elif user_id == "User1":
+            return 9
+        elif user_id == 9:
             return "Fake User"
         elif user_name == "Ace":
-            return "1"
-        elif user_id == "1":
+            return 1
+        elif user_id == 1:
             return "Ace"
         return None
 
     def get_user_roles(self, user_id):
-        return ["Role1"]
+        return [2]
 
     def dm(self, user_id, message):
         self.fake_dm = f"{self.get_user_name_or_id(user_id=user_id)}: {message}"
