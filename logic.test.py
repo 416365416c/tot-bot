@@ -6,7 +6,7 @@ import datastore
 import lad
 import logic
 
-class TestLogic(unittest.TestCase):
+class TestLogic(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         # Logic depends on datastore
         self.con = sqlite3.connect(":memory:")
@@ -141,12 +141,11 @@ class TestLogic(unittest.TestCase):
         ret = logic.respond_to(self.con, self.lad, 1, "Ace", "super wrong")
         self.assertTrue(ret.startswith("You must wait"))
 
-    def testMessages(self):
+    async def testMessages(self):
         logic.respond_to(self.con, self.lad, 1, "Ace", "timeoff 4 hours")
         back_time = logic.xy_str(datetime.utcnow() + timedelta(hours=4))
-        logic.check_backs(self.con, self.lad)
+        await logic.check_backs(self.con, self.lad)
         ret = self.lad.pop_last_dm()
-        print(ret)
         self.assertTrue(ret.startswith("Ace:"))
         self.assertTrue("Fake Guild" in ret)
         self.assertTrue(back_time in ret)
@@ -156,7 +155,7 @@ class TestLogic(unittest.TestCase):
         self.assertTrue(ret == None)
 
         # No new msg due to ack flag
-        logic.check_backs(self.con, self.lad)
+        await logic.check_backs(self.con, self.lad)
         ret = self.lad.pop_last_dm()
         self.assertTrue(ret == None)
 

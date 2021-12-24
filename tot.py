@@ -25,14 +25,18 @@ intents.members = True # Non-standard but necessary for the server bind approach
 client = discord.Client(intents=intents)
 lad = lad.Lad(client)
 
+init_flag = False
+
 @client.event
 async def on_ready():
-    global myId
+    global init_flag
     print(f"Started {client.user} - {client.user.id}")
-    asyncio.get_event_loop().call_later(logic.POLL_INTERVAL, logic.poll, sldb, lad)
-    guild_id = datastore.get_guild(sldb)
-    if guild_id:
-        lad.set_guild(guild_id)
+    if not init_flag:
+        init_flag = True
+        guild_id = datastore.get_guild(sldb)
+        if guild_id:
+            lad.set_guild(guild_id)
+        await logic.poll_forever(sldb, lad) # Never returns, but does sleep
 
 
 @client.event

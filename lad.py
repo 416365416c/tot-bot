@@ -70,13 +70,14 @@ class Lad:
                 ret.append(r.id)
         return ret
 
-    def dm(self, user_id, message):
+    async def dm(self, user_id, message):
         member = self.guild.get_member(user_id)
-        member.send(message) # No waiting, just let it run in the background
+        await member.send(message) # TODO: No waiting, just let it run in the background
 
 class FakeLad:
     def __init__(self):
         self.guild_id = 11
+        self.fake_dm = None
 
     def set_guild(self, guild_id):
         self.guild_id = guild_id
@@ -105,7 +106,7 @@ class FakeLad:
     def get_user_roles(self, user_id):
         return [2]
 
-    def dm(self, user_id, message):
+    async def dm(self, user_id, message):
         self.fake_dm = f"{self.get_user_name_or_id(user_id=user_id)}: {message}"
 
     def pop_last_dm(self):

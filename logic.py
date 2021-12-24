@@ -16,7 +16,10 @@ timeoff <days> - register time off for a specific number of days
 return - register a return from time off
 when <user name> - query when user X should be back
 soon - returns a list of users expected back within the next week
+
+Note that all my times and dates are returned in UTC, so that I don't need to know where you are at all times.
 """
+# recent - returns a list of users who were expected back within the last week?
 helpAdminTxt = """For esteemed admins, I support the following commands:
 help admin - this message
 list <role name> - list members with role R who are away and when they'll be back.
@@ -24,6 +27,8 @@ empower <role name> - toggles admin powers for role R
 bind <server id> - binds this bot instance to a server by id; resets admin roles.
 super OTT - Enter superadmin mode; requires OTT from server logs.
 Usually you'll use superadmin mode once to call bind and then empower with an initial admin role.
+
+Note that, for simplicity, all my times and dates are returned in UTC.
 """
 # clear <user name> - clear the record for named user
 # refresh - Updates user/server/role names in the database using the discord ids saved alongside.
@@ -242,8 +247,9 @@ def respond_to(ds_con, lad, user_id, user_name, message):
     else:
         return unknownTxt
 
-def check_backs(ds_con, lad):
+async def check_backs(ds_con, lad):
     """ Send DM reminders to those back within the next day """
+    # Async because of DMs 
     if lad.guild_name() == None:
         return
     backs = datastore.get_backs(ds_con)
@@ -257,11 +263,11 @@ def check_backs(ds_con, lad):
         t_back = datetime.fromisoformat(b[2])
         t_now = datetime.utcnow()
         if t_back > t_now and t_back - timedelta(days=1) <= t_now:
-            lad.dm(b[1], f"Looking forward to seeing you back in {lad.guild_name()} on the {xy_str(b[2])}!")
+            await lad.dm(b[1], f"Looking forward to seeing you back in {lad.guild_name()} on the {xy_str(b[2])}!")
             datastore.ack_event(ds_con, b[1])
 
-def poll(ds_con, lad):
+async def poll_forever(ds_con, lad):
     """ Called regularly to react to DB state """
-    check_backs(ds_con, lad)
+    await check_backs(ds_con, lad)
     # Schedule the next call
-    asyncio.get_running_loop().call_later(POLL_INTERVAL, poll, ds_con, lad)
+    await asyncio.sleep(POLL_INTERVAL)
