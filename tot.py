@@ -58,9 +58,8 @@ async def on_message(message):
                 else:
                     message_content += f"{word} " # Trailing space is okay as we'll rstrip
         message_content = message_content.rstrip()
-        user_name = message.author.nick
-        if user_name == None:
-            user_name= message.author.name
+        #user_name = message.author.nick # In DMs nick simply isn't there
+        user_name= message.author.name
         response = logic.respond_to(sldb, lad, message.author.id, user_name, message_content)
         await message.channel.send(response, reference=message.to_reference())
 
