@@ -14,9 +14,9 @@ helpTxt = """I support the following commands:
 help - this message
 timeoff <days> - register time off for a specific number of days
 return - register a return from time off
-when <user name> - query when user X should be back
-list <role name> - list members with role R who are away and when they'll be back.
-list all - list all members with role R.
+when <user name> - query when a user should be back
+list <role name> - list members with a role who are away and when they'll be back.
+list all <role name> - list all members with a role.
 soon - returns a list of users expected back within the next week
 
 Note that all my times and dates are returned in UTC, so that I don't need to know where you are at all times.
@@ -184,6 +184,9 @@ def respond_to(ds_con, lad, user_id, user_name, message):
         role_name = None
         if (len(message) > 5):
             role_name = message[5:] # Drop 'list ', rest is role name
+        if role_name.startswith("all"):
+            role_name = role_name[4:] # Special case not using TOT but hard in the normal client.
+            return role_name + " list: " + ", ".join(lad.all_with_role(role_name))
         backs = datastore.get_backs(ds_con)
         users = []
         role_id = lad.get_role_name_or_id(role_name=role_name)
@@ -255,18 +258,16 @@ async def check_backs(ds_con, lad):
     for b in backs:
         if b[3]: #Already ack'd
             continue
-        if len(lad.get_user_roles(b[1])) == 0:
-            # No roles, must have left the guild. Ignore them
-            datastore.ack_event(ds_con, b[1])
-            continue
+        # lad.dm will check for if they've left the guilds
         t_back = datetime.fromisoformat(b[2])
         t_now = datetime.utcnow()
         if t_back > t_now and t_back - timedelta(days=1) <= t_now:
-            await lad.dm(b[1], f"Looking forward to seeing you back in {lad.guild_name()} on the {xy_str(b[2])}!")
+            await lad.dm(b[1], f"Looking forward to seeing you back on the {xy_str(b[2])}!")
             datastore.ack_event(ds_con, b[1])
 
 async def poll_forever(ds_con, lad):
     """ Called regularly to react to DB state """
-    await check_backs(ds_con, lad)
-    # Schedule the next call
-    await asyncio.sleep(POLL_INTERVAL)
+    while True:
+        await check_backs(ds_con, lad)
+        # Schedule the next call
+        await asyncio.sleep(POLL_INTERVAL)

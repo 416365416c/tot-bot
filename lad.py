@@ -29,12 +29,12 @@ class Lad:
         #        self.guild = guild
         #        return
     def guild_name(self):
-        if discord_client == None:
+        if self.discord_client == None:
             return None
         return self.discord_client.guilds[0].name
 
     def get_role_name_or_id(self, role_id=None, role_name=None):
-        if discord_client == None:
+        if self.discord_client == None:
             return None
         roles = []
         for guild in self.discord_client.guilds:
@@ -55,7 +55,7 @@ class Lad:
         return None
 
     def get_user_name_or_id(self, user_id=None, user_name=None):
-        if discord_client == None:
+        if self.discord_client == None:
             return None
 
         for guild in self.discord_client.guilds:
@@ -70,7 +70,7 @@ class Lad:
         return None
 
     def get_user_roles(self, user_id):
-        if discord_client == None:
+        if self.discord_client == None:
             return None
 
         ret = []
@@ -81,14 +81,30 @@ class Lad:
                     ret.append(r.id)
         return ret
 
+    def all_with_role(self, role_name):
+        if self.discord_client == None:
+            return []
+        ret = []
+        for guild in self.discord_client.guilds:
+            for member in guild.members:
+                for role in member.roles:
+                    if role.name == role_name:
+                        ret.append(member.name)
+        return ret
+
     async def dm(self, user_id, message):
-        if discord_client == None:
+        if self.discord_client == None:
             return None
         member = None
         for guild in self.discord_client.guilds:
             member = guild.get_member(int(user_id))
+            if member:
+                break
+            
         if member:
             await member.send(message) # TODO: No waiting, just let it run in the background
+        else:
+            print(f"Skipping message for {user_id} as they are no longer associated")
 
 class FakeLad:
     def __init__(self):
@@ -118,6 +134,9 @@ class FakeLad:
         elif user_id == 1:
             return "Ace"
         return None
+
+    def all_with_role(self, role_name):
+        return ["Fake User"]
 
     def get_user_roles(self, user_id):
         return [2]
