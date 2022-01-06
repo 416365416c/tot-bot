@@ -4,34 +4,42 @@
 class Lad:
     def __init__(self, discord_client):
         self.discord_client = discord_client
-        self.guild_id = None
-        self.guild = None
+        #self.guild_id = None
+        #self.guild = None
+
+    def get_guild(self, guild_id):
+        return None
 
     def set_guild(self, guild_id):
-        # Must be a guild that it has been added to!
-        self.guild_id = None
-        self.guild = None
-        if type(guild_id) == str:
-            try:
-                guild_id = int(guild_id)
-            except:
-                return
-            
-        for guild in self.discord_client.guilds:
-            if guild.id == guild_id:
-                self.guild_id = guild.id
-                self.guild = guild
-                return
+        # Trying just using all guilds instead
+        return None
 
+        # Must be a guild that it has been added to!
+        #self.guild_id = None
+        #self.guild = None
+        #if type(guild_id) == str:
+        #    try:
+        #        guild_id = int(guild_id)
+        #    except:
+        #        return
+        #    
+        #for guild in self.discord_client.guilds:
+        #    if guild.id == guild_id:
+        #        self.guild_id = guild.id
+        #        self.guild = guild
+        #        return
     def guild_name(self):
-        if self.guild_id == None or self.guild == None:
+        if discord_client == None:
             return None
-        return self.guild.name
+        return self.discord_client.guilds[0].name
 
     def get_role_name_or_id(self, role_id=None, role_name=None):
-        if self.guild == None:
+        if discord_client == None:
             return None
-        roles = self.guild.roles
+        roles = []
+        for guild in self.discord_client.guilds:
+            roles += guild.roles
+
         if role_id:
             try:
                 role_id = int(role_id)
@@ -47,32 +55,40 @@ class Lad:
         return None
 
     def get_user_name_or_id(self, user_id=None, user_name=None):
-        if self.guild == None:
+        if discord_client == None:
             return None
-        members = self.guild.members
-        if user_id:
-            member = self.guild.get_member(user_id)
-            if member:
-                return member.name
-        elif user_name:
-            member = self.guild.get_member_named(user_name)
-            if member:
-                return member.id
+
+        for guild in self.discord_client.guilds:
+            if user_id:
+                member = guild.get_member(user_id)
+                if member:
+                    return member.name
+            elif user_name:
+                member = guild.get_member_named(user_name)
+                if member:
+                    return member.id
         return None
 
     def get_user_roles(self, user_id):
-        if self.guild == None:
-            return []
-        member = self.guild.get_member(int(user_id))
+        if discord_client == None:
+            return None
+
         ret = []
-        if member:
-            for r in member.roles:
-                ret.append(r.id)
+        for guild in self.discord_client.guilds:
+            member = guild.get_member(int(user_id))
+            if member:
+                for r in member.roles:
+                    ret.append(r.id)
         return ret
 
     async def dm(self, user_id, message):
-        member = self.guild.get_member(user_id)
-        await member.send(message) # TODO: No waiting, just let it run in the background
+        if discord_client == None:
+            return None
+        member = None
+        for guild in self.discord_client.guilds:
+            member = guild.get_member(int(user_id))
+        if member:
+            await member.send(message) # TODO: No waiting, just let it run in the background
 
 class FakeLad:
     def __init__(self):

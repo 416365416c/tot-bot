@@ -15,6 +15,8 @@ help - this message
 timeoff <days> - register time off for a specific number of days
 return - register a return from time off
 when <user name> - query when user X should be back
+list <role name> - list members with role R who are away and when they'll be back.
+list all - list all members with role R.
 soon - returns a list of users expected back within the next week
 
 Note that all my times and dates are returned in UTC, so that I don't need to know where you are at all times.
@@ -22,9 +24,8 @@ Note that all my times and dates are returned in UTC, so that I don't need to kn
 # recent - returns a list of users who were expected back within the last week?
 helpAdminTxt = """For esteemed admins, I support the following commands:
 help admin - this message
-list <role name> - list members with role R who are away and when they'll be back.
 empower <role name> - toggles admin powers for role R
-bind <server id> - binds this bot instance to a server by id; resets admin roles.
+bind <server id> - binds this bot instance to a server by id; resets admin roles. Currently binding is not enforced.
 super OTT - Enter superadmin mode; requires OTT from server logs.
 Usually you'll use superadmin mode once to call bind and then empower with an initial admin role.
 
@@ -72,7 +73,7 @@ def respond_to(ds_con, lad, user_id, user_name, message):
     if message.startswith("help"):
         # help - prints help text
         if message == "help admin":
-            return f"Current Guild: {lad.guild_name()}\n" + helpAdminTxt
+            return f"Current Bound Guild: {lad.guild_name()}\n" + helpAdminTxt
         return helpTxt
     elif message.startswith("super"):
         # ex. super RandomPassword - Enter superadmin mode for ten minutes, wherein the current user can call admin/superadmin commands.
@@ -178,9 +179,7 @@ def respond_to(ds_con, lad, user_id, user_name, message):
             return "Nobody is coming back soon."
         return ret
     elif message.startswith("list"):
-        # ex. list admins - ADMIN REQUIRED Returns a list of who is coming back, optionally filtered by role
-        if admin_mode == None:
-            return permissionTxt
+        # ex. list admins - Returns a list of who is coming back, optionally filtered by role
 
         role_name = None
         if (len(message) > 5):

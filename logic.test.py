@@ -80,12 +80,12 @@ class TestLogic(unittest.IsolatedAsyncioTestCase):
         self.assertTrue("Mr Test" in ret)
         self.assertFalse("Mr Long" in ret)
 
-        # These require admin, available though super admin in tests
-        ret = logic.respond_to(self.con, self.lad, 1, "Ace", "list")
-        self.assertTrue(ret.startswith("Sorry"))
+        # Used to require admin, available though super admin in tests
+        #ret = logic.respond_to(self.con, self.lad, 1, "Ace", "list")
+        #self.assertTrue(ret.startswith("Sorry"))
 
-        otp = datastore.reset_master_password(self.con)
-        logic.respond_to(self.con, self.lad, 1, "Ace", "super " + otp)
+        #otp = datastore.reset_master_password(self.con)
+        #logic.respond_to(self.con, self.lad, 1, "Ace", "super " + otp)
 
         ret = logic.respond_to(self.con, self.lad, 1, "Ace", "list")
         self.assertTrue("Mr Test" in ret)
